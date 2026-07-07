@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,14 @@ type Logger struct {
 	*zap.Logger
 
 	file *os.File
+}
+
+func FromContext(ctx context.Context) *Logger {
+	logger, ok := ctx.Value("logger").(*Logger)
+	if !ok {
+		panic("logger not found in context")
+	}
+	return logger
 }
 
 func NewLogger(config LoggerConfig) (*Logger, error) {
@@ -50,6 +59,14 @@ func NewLogger(config LoggerConfig) (*Logger, error) {
 		Logger: logger,
 		file:   file,
 	}, nil
+}
+
+// переопределяем метод With из zap.Logger
+func (l *Logger) With(field ...zap.Field) *Logger {
+	return &Logger{
+		Logger: l.Logger.With(field...),
+		file:   l.file,
+	}
 }
 
 func (l *Logger) Close() error {
